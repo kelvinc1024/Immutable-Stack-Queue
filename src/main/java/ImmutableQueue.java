@@ -10,7 +10,8 @@
  * {@link ImmutableQueue#emptyQueue()} O(1)
  * {@link ImmutableQueue#head()} O(1)
  * <p>
- * 2. can we do better by using linked list concept?
+ * 2. Implement using 2 stack first iteration (implementation in commit hash : 8880d2ad36e528b4ae317a4025b5f6d590e1272c)
+ * can we do better by using linked list concept?
  * lets suppose we have linked list such as below
  * 1 <- 2 <- 3 <- 4
  * notice that the pointer is pointing back to parent
