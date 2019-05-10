@@ -35,7 +35,8 @@ public class ImmutableQueueTest {
                 Arguments.of(new Object[]{new AddAction(1), new AddAction(2), new AddAction(3)}, Boolean.FALSE),
                 Arguments.of(new Object[]{new AddAction(1), new AddAction(2), new DeleteAction(), new DeleteAction()}, Boolean.TRUE),
                 Arguments.of(new Object[]{new AddAction(1), new DeleteAction(), new AddAction(2), new DeleteAction()}, Boolean.TRUE),
-                Arguments.of(new Object[]{new AddAction(1), new DeleteAction(), new AddAction(2)}, Boolean.FALSE)
+                Arguments.of(new Object[]{new AddAction(1), new DeleteAction(), new AddAction(2)}, Boolean.FALSE),
+                Arguments.of(new Object[]{new AddAction(1), new AddAction(2), new DeleteAction(), new AddAction(3), new DeleteAction()}, Boolean.FALSE)
         );
     }
 

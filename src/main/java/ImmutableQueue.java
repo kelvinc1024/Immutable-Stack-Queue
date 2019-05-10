@@ -20,7 +20,7 @@
  * but same thing will not work if we want to delete 1,
  * so we can actually do O(1) insert and O(1) delete for latest item (which is {@link ImmutableStack}, but it can't be done for {@link ImmutableQueue})
  * <p>
- *
+ * <p>
  * is {@link ImmutableStack} actually useful for implementing {@link ImmutableQueue}?
  * We know queue can be implemented by using 2 stacks, lets see if this can perform better than our first solution
  * inserting into queue has no difference with inserting into stack, so we can implement {@link ImmutableQueue} with O(1) complexity same with {@link ImmutableStack}
@@ -37,47 +37,82 @@
  * {@link ImmutableQueue#deQueue()} O(n) but exact calculation is O(2n) where n is number of element
  * {@link ImmutableQueue#emptyQueue()} O(1)
  * {@link ImmutableQueue#head()} O(1)
+ * <p>
+ * 3. Implement using 2 stack with amortized case (implementation in current commit hash)
+ * We still can perform better than our 2nd solution, the main key point here is we don't need to reverse the stack every time to do a pop
+ * How the algorithm work :
+ * 1. When first deQueue : We can reverse the 1st stack and keep it on the 2nd stack for deQueue, and then clear the 1st stack
+ * 2. When enQueue : we still insert as usual to the 1st stack
+ * 3. When deQueue again : when we want to perform delete operation we keep doing pop in the 2nd stack if it is not empty, else we go to step 1
+ * <p>
+ * input scenario
+ * perform queue 1, 2, 3, 4
+ * 1st stack : 1, 2, 3, 4
+ * 2nd stack : empty
+ * perform dequeue
+ * 1st stack : empty
+ * 2nd stack : 4, 3, 2, 1 -> pop 1 -> 4, 3, 2
+ * perform queue
+ * 1st stack : 5, 6
+ * 2nd stack : 4, 3, 2
+ * perform 3 times dequeue
+ * 1st stack : 5, 6
+ * 2nd stack : 4, 3, 2 -> pop 2 -> 4, 3 -> pop 3 -> 4 -> pop 4 -> empty
+ * perform dequeue
+ * 1st stack : empty
+ * 2nd stack : 6, 5 -> pop 5 -> 6
+ * <p>
+ * Time complexity analysis
+ * {@link ImmutableQueue#enQueue(Object)} O(1) where n is number of element
+ * {@link ImmutableQueue#deQueue()} O(1) but because it is amortized, with worst case of O(n) when 2nd stack is empty where n is size of 1st stack
+ * {@link ImmutableQueue#emptyQueue()} O(1)
+ * {@link ImmutableQueue#head()} O(1)
  *
  * @param <T> Generic type for data you want to store
  */
 public class ImmutableQueue<T> implements Queue<T> {
 
-    private Stack<T> stack;
-    private T head;
+    private Stack<T> stack; // 1st stack on 3rd explanation
+    private Stack<T> reversedStack; // 2nd stack on 3rd explanation
 
-    private ImmutableQueue(T head, Stack<T> stack) {
+    private ImmutableQueue(Stack<T> stack, Stack<T> reversedStack) {
         this.stack = stack;
-        this.head = head;
+        this.reversedStack = reversedStack;
     }
 
     @Override
     public Queue<T> enQueue(T data) {
-        return new ImmutableQueue<>(this.head, stack.add(data));
+        return new ImmutableQueue<>(stack.add(data), reversedStack);
+    }
+
+    private Stack<T> getReversedStack(Stack<T> stack) {
+        Stack<T> reversedStack = ImmutableStack.emptyStack();
+        while (!stack.isEmpty()) {
+            reversedStack = reversedStack.add(stack.head());
+            stack = stack.pop();
+        }
+        return reversedStack;
     }
 
     @Override
     public Queue<T> deQueue() {
-        Stack<T> originalStack = stack;
-        Stack<T> tempStack = ImmutableStack.emptyStack();
-        while (!originalStack.isEmpty()) {
-            tempStack = tempStack.add(originalStack.head());
-            originalStack = originalStack.pop();
+        if (reversedStack.isEmpty()) {
+            reversedStack = getReversedStack(stack);
+            stack = ImmutableStack.emptyStack();
         }
-        tempStack = tempStack.pop();
-        if (tempStack.isEmpty()) {
-            return ImmutableQueue.emptyQueue();
+        if (reversedStack.pop().isEmpty() && stack.isEmpty()) {
+            return emptyQueue();
         }
-        T head = tempStack.head();
-        while (!tempStack.isEmpty()) {
-            originalStack = originalStack.add(tempStack.head());
-            tempStack = tempStack.pop();
-        }
-        return new ImmutableQueue<>(head, originalStack);
+        return new ImmutableQueue<>(stack, reversedStack.pop());
     }
 
     @Override
     public T head() {
-        return head;
+        if (reversedStack.isEmpty()) {
+            reversedStack = getReversedStack(stack);
+            stack = ImmutableStack.emptyStack();
+        }
+        return reversedStack.head();
     }
 
     @Override
@@ -95,7 +130,7 @@ public class ImmutableQueue<T> implements Queue<T> {
 
         @Override
         public Queue<T> enQueue(T data) {
-            return new ImmutableQueue<>(data, stack.add(data));
+            return new ImmutableQueue<>(stack.add(data), ImmutableStack.emptyStack());
         }
 
         @Override
