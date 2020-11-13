@@ -9,6 +9,6 @@ see covered testing scenario in test `src/test/java` folder
 
 # Running Test Program
 execute following command
-```bash
+```
 ./gradlew test
 ```
